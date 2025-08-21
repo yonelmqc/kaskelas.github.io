@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAS XITKRO2 - Bendahara Liyonel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        
+        .income-bg {
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+        }
+        
+        .expense-bg {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .category-chip {
+            transition: all 0.3s ease;
+        }
+        
+        .category-chip:hover {
+            transform: scale(1.05);
+        }
+        
+        #transactionChart {
+            max-height: 300px;
+        }
+        
+        @media (max-width: 640px) {
+            .mobile-column {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="card-gradient rounded-xl p-6 shadow-lg mb-8 text-white">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">KAS XITKRO2</h1>
+                    <p class="text-white/80 mt-1">Bendahara: Liyonel</p>
+                </div>
+                <div class="mt-4 md:mt-0 bg-white/10 rounded-full px-4 py-2">
+                    <span id="currentBalance" class="text-xl font-semibold">Rp 0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Transaction Input Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Tambah Transaksi</h2>
+                    
+                    <!-- Category Buttons -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="selectCategory('Iuran Siswa', 'income')" class="category-chip py-2 px-3 bg-emerald-50 text-emerald-600 rounded-md text-sm font-medium">Iuran Siswa</button>
+                            <button onclick="selectCategory('Dana Kegiatan', 'income')" class="category-chip py-2 px-3 bg-green-50 text-green-600 rounded-md text-sm font-medium">Dana Kegiatan</button>
+                            <button onclick="selectCategory('Sumbangan', 'income')" class="category-chip py-2 px-3 bg-blue-50 text-blue-600 rounded-md text-sm font-medium">Sumbangan</button>
+                            <button onclick="selectCategory('Pembelian ATK', 'expense')" class="category-chip py-2 px-3 bg-red-50 text-red-600 rounded-md text-sm font-medium">Pembelian ATK</button>
+                            <button onclick="selectCategory('Acara Kelas', 'expense')" class="category-chip py-2 px-3 bg-yellow-50 text-yellow-600 rounded-md text-sm font-medium">Acara Kelas</button>
+                            <button onclick="selectCategory('Lainnya', 'expense')" class="category-chip py-2 px-3 bg-purple-50 text-purple-600 rounded-md text-sm font-medium">Lainnya</button>
+                        </div>
+                    </div>
+                    
+                    <form id="transactionForm" class="space-y-4">
+                        <div class="hidden">
+                            <input type="radio" id="income" name="type" value="income" checked>
+                            <input type="radio" id="expense" name="type" value="expense">
+                        </div>
+                        
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">Keterangan (Otomatis)</label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input type="text" name="title" id="title" class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-md sm:text-sm border-gray-300" placeholder="Transaksi baru">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="amount" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm"> Rp </span>
+                                </div>
+                                <input type="number" name="amount" id="amount" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-12 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700">Tanggal</label>
+                            <div class="mt-1">
+                                <input type="date" name="date" id="date" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="notes" class="block text-sm font-medium text-gray-700">Catatan (Opsional)</label>
+                            <div class="mt-1">
+                                <textarea id="notes" name="notes" rows="2" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Tambahkan catatan..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button type="submit" class="flex-1 bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Simpan
+                            </button>
+                            <button type="reset" onclick="resetForm()" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Transaction List and Charts -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white rounded-xl shadow-md p-4 income-bg">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Total Pemasukan</p>
+                                <p id="totalIncome" class="text-xl font-semibold text-gray-900">Rp 0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-4 expense-bg">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-red-100 text-red-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Total Pengeluaran</p>
+                                <p id="totalExpense" class="text-xl font-semibold text-gray-900">Rp 0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Statistik Keuangan</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <canvas id="transactionChart"></canvas>
+                        </div>
+                        <div>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transaction History -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Riwayat Transaksi</h2>
+                        <div class="relative">
+                            <select id="filterMonth" onchange="filterTransactions()" class="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-md leading-tight focus:outline-none focus:ring-1 focus:ring-indigo-500 h-10 text-sm">
+                                <option value="all">Semua Bulan</option>
+                                <option value="0">Januari</option>
+                                <option value="1">Februari</option>
+                                <option value="2">Maret</option>
+                                <option value="3">April</option>
+                                <option value="4">Mei</option>
+                                <option value="5">Juni</option>
+                                <option value="6">Juli</option>
+                                <option value="7">Agustus</option>
+                                <option value="8">September</option>
+                                <option value="9">Oktober</option>
+                                <option value="10">November</option>
+                                <option value="11">Desember</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionList" class="bg-white divide-y divide-gray-200">
+                                <!-- Transactions will be added here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada transaksi</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize transactions array
+        let transactions = JSON.parse(localStorage.getItem('kasXITKRO2Transactions')) || [];
+        
+        // DOM Elements
+        const transactionForm = document.getElementById('transactionForm');
+        const titleInput = document.getElementById('title');
+        const amountInput = document.getElementById('amount');
+        const dateInput = document.getElementById('date');
+        const notesInput = document.getElementById('notes');
+        const transactionList = document.getElementById('transactionList');
+        const currentBalance = document.getElementById('currentBalance');
+        const totalIncome = document.getElementById('totalIncome');
+        const totalExpense = document.getElementById('totalExpense');
+        const filterMonth = document.getElementById('filterMonth');
+        
+        // Initialize charts
+        let transactionChart, categoryChart;
+        
+        // Set default date to today
+        dateInput.valueAsDate = new Date();
+        
+        // Initialize the app
+        function initApp() {
+            updateTransactionList();
+            updateSummary();
+            updateCharts();
+        }
+        
+        // Update transaction list
+        function updateTransactionList(filteredTransactions = null) {
+            const transactionsToShow = filteredTransactions || transactions;
+            
+            if (transactionsToShow.length === 0) {
+                transactionList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada transaksi</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            transactionList.innerHTML = '';
+            
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...transactionsToShow].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach((transaction, index) => {
+                const date = new Date(transaction.date);
+                const formattedDate = date.toLocaleDateString('id-ID', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                
+                const formattedAmount = transaction.amount.toLocaleString('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR'
+                });
+                
+                const typeClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
+                
+                transactionList.innerHTML += `
+                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${transaction.title}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transaction.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${typeClass}">${transaction.type === 'income' ? '+' : '-'} ${formattedAmount}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <button onclick="deleteTransaction(${index})" class="text-red-600 hover:text-red-900">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        // Update summary info
+        function updateSummary() {
+            const incomeTotal = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            const expenseTotal = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+                
+            const balance = incomeTotal - expenseTotal;
+            
+            currentBalance.textContent = balance.toLocaleString('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            });
+            
+            totalIncome.textContent = incomeTotal.toLocaleString('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            });
+            
+            totalExpense.textContent = expenseTotal.toLocaleString('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            });
+        }
+        
+        // Update charts
+        function updateCharts() {
+            // Monthly transaction chart
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            
+            const currentYear = new Date().getFullYear();
+            const monthlyIncome = Array(12).fill(0);
+            const monthlyExpense = Array(12).fill(0);
+            
+            transactions.forEach(transaction => {
+                const date = new Date(transaction.date);
+                if (date.getFullYear() === currentYear) {
+                    const month = date.getMonth();
+                    if (transaction.type === 'income') {
+                        monthlyIncome[month] += transaction.amount;
+                    } else {
+                        monthlyExpense[month] += transaction.amount;
+                    }
+                }
+            });
+            
+            // Category chart data
+            const categoryData = {};
+            
+            transactions.forEach(transaction => {
+                // Only consider expense categories for the pie chart for simplicity, or adjust as needed
+                if (transaction.type === 'expense' || transaction.type === 'income') { // Include income categories if desired
+                    if (!categoryData[transaction.category]) {
+                        categoryData[transaction.category] = 0;
+                    }
+                    categoryData[transaction.category] += transaction.amount;
+                }
+            });
+            
+            const categoryLabels = Object.keys(categoryData);
+            const categoryAmounts = Object.values(categoryData);
+            
+            // Destroy existing charts if they exist
+            if (transactionChart) {
+                transactionChart.destroy();
+            }
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+            
+            // Create transaction chart
+            const transactionCtx = document.getElementById('transactionChart').getContext('2d');
+            transactionChart = new Chart(transactionCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Pemasukan',
+                            data: monthlyIncome,
+                            backgroundColor: '#10b981',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Pengeluaran',
+                            data: monthlyExpense,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Create category chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryAmounts,
+                        backgroundColor: [
+                            '#ef4444', // Red
+                            '#f97316', // Orange
+                            '#f59e0b', // Amber
+                            '#eab308', // Yellow
+                            '#84cc16', // Lime
+                            '#10b981', // Emerald
+                            '#14b8a6', // Teal
+                            '#06b6d4', // Cyan
+                            '#0ea5e9', // Sky
+                            '#3b82f6', // Blue
+                            '#6366f1', // Indigo
+                            '#8b5cf6', // Violet
+                            '#a855f7', // Purple
+                            '#d946ef', // Fuchsia
+                            '#ec4899', // Pink
+                            '#f43f5e'  // Rose
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Select category
+        function selectCategory(category, type) {
+            document.getElementById(type).checked = true;
+            titleInput.value = `${type === 'income' ? 'Pemasukan' : 'Pengeluaran'} ${category}`;
+            
+            // Highlight selected category button
+            document.querySelectorAll('.category-chip').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-indigo-500');
+                btn.classList.remove('opacity-100');
+                btn.classList.add('opacity-80');
+            });
+            
+            event.target.classList.add('ring-2', 'ring-indigo-500');
+            event.target.classList.remove('opacity-80');
+            event.target.classList.add('opacity-100');
+        }
+        
+        // Form submission
+        transactionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const type = document.querySelector('input[name="type"]:checked').value;
+            const title = titleInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const date = dateInput.value;
+            const notes = notesInput.value.trim();
+            const categoryButtons = document.querySelectorAll('.category-chip.ring-2');
+            let category = 'Lainnya'; // Default category if none selected
+            
+            if (categoryButtons.length > 0) {
+                category = categoryButtons[0].textContent;
+            }
+            
+            if (!title || isNaN(amount) || amount <= 0) {
+                alert('Mohon isi semua field dengan benar (Keterangan dan Jumlah).');
+                return;
+            }
+            
+            const transaction = {
+                type,
+                title,
+                amount,
+                date,
+                notes,
+                category,
+                createdAt: new Date().toISOString()
+            };
+            
+            transactions.push(transaction);
+            localStorage.setItem('kasXITKRO2Transactions', JSON.stringify(transactions));
+            
+            resetForm();
+            initApp();
+        });
+        
+        // Reset form
+        function resetForm() {
+            transactionForm.reset();
+            dateInput.valueAsDate = new Date(); // Set default date back to today
+            
+            // Remove highlight from category buttons
+            document.querySelectorAll('.category-chip').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-indigo-500');
+                btn.classList.remove('opacity-100');
+                btn.classList.add('opacity-80'); // Re-add opacity for consistency
+            });
+            // Ensure the first radio button (income) is checked by default after reset
+            document.getElementById('income').checked = true;
+        }
+        
+        // Filter transactions by month
+        function filterTransactions() {
+            const month = filterMonth.value;
+            
+            if (month === 'all') {
+                updateTransactionList();
+                return;
+            }
+            
+            const filtered = transactions.filter(t => {
+                const date = new Date(t.date);
+                return date.getMonth() === parseInt(month);
+            });
+            
+            updateTransactionList(filtered);
+        }
+        
+        // Delete transaction
+        function deleteTransaction(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+                // Adjust index because we are sorting for display, but need to delete from original array
+                // A more robust solution would be to use unique IDs for transactions
+                const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const transactionToDelete = sortedTransactions[index];
+                
+                const originalIndex = transactions.findIndex(t => 
+                    t.title === transactionToDelete.title && 
+                    t.amount === transactionToDelete.amount && 
+                    t.date === transactionToDelete.date &&
+                    t.createdAt === transactionToDelete.createdAt // Use createdAt for uniqueness
+                );
+
+                if (originalIndex > -1) {
+                    transactions.splice(originalIndex, 1);
+                    localStorage.setItem('kasXITKRO2Transactions', JSON.stringify(transactions));
+                    initApp();
+                }
+            }
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
